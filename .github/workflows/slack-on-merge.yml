@@ -1,0 +1,29 @@
+name: Notify Slack on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    # Run only if PR was actually merged
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"🔀 *Pull Request Merged*\n\n*Title:* $PR_TITLE\n*Author:* $PR_AUTHOR\n*From:* $HEAD_BRANCH\n*To:* $BASE_BRANCH\n\n$PR_URL\"
+          }" \
+          $SLACK_WEBHOOK_URL
