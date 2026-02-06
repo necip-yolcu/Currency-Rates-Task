@@ -1,0 +1,39 @@
+name: Coolify Test Notify
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Coolify Deployment Info
+        id: coolify
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            "${{ secrets.COOLIFY_API_URL }}/api/v1/deployments/applications/${{ secrets.COOLIFY_APP_ID }}")
+
+          STATUS=$(echo "$RESPONSE" | jq -r '.deployments[0].status')
+          COMMIT=$(echo "$RESPONSE" | jq -r '.deployments[0].commit')
+          MESSAGE=$(echo "$RESPONSE" | jq -r '.deployments[0].commit_message')
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+
+      - name: Send Slack Test Message
+        run: |
+          STATUS="${{ steps.coolify.outputs.status }}"
+          COMMIT="${{ steps.coolify.outputs.commit }}"
+          MESSAGE="${{ steps.coolify.outputs.message }}"
+
+          PAYLOAD=$(jq -n \
+            --arg text "Coolify Test Notification\nStatus: $STATUS\nCommit: $COMMIT\nMessage: $MESSAGE" \
+            '{text: $text}')
+
+          curl -X POST \
+            -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
