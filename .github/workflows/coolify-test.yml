@@ -13,7 +13,7 @@ jobs:
         run: |
           RESPONSE=$(curl -s \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            "${{ secrets.COOLIFY_API_URL }}/api/v1/deployments/applications/${{ secrets.COOLIFY_APP_ID }}")
+            "${{ secrets.COOLIFY_API_DS_URL }}/api/v1/deployments/applications/${{ secrets.COOLIFY_APP_STAGE_ID }}")
 
           STATUS=$(echo "$RESPONSE" | jq -r '.deployments[0].status')
           COMMIT=$(echo "$RESPONSE" | jq -r '.deployments[0].commit')
